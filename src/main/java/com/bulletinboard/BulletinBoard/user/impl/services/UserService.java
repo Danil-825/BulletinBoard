@@ -9,11 +9,12 @@ import com.bulletinboard.BulletinBoard.user.api.dto.users.UserUpdateDtoForUser;
 import com.bulletinboard.BulletinBoard.user.db.entity.User;
 import com.bulletinboard.BulletinBoard.user.db.enums.Role;
 import com.bulletinboard.BulletinBoard.user.db.repository.UserRepository;
+import com.bulletinboard.BulletinBoard.user.impl.mappers.UserMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,12 +29,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     public List<UserResponseDtoForAdmin> findAll() {
         List<User> users = userRepository.findAll();
         checkList(users);
         return users.stream()
-                .map(UserResponseDtoForAdmin::new)
+                .map(userMapper::toAdminDto)
                 .collect(Collectors.toList());
     }
 
@@ -41,76 +43,72 @@ public class UserService {
         User user = findByThrowUserNotFound(
                 () -> userRepository.findById(id), "id", String.valueOf(id)
         );
-        return new UserResponseDtoForAdmin(user);
+        return userMapper.toAdminDto(user);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public UserResponseDtoForAdmin createUser(UserCreateDtoForUser createDto) {
-        User user = new User();
-        user.setName(createDto.getName());
-        user.setLogin(createDto.getLogin());
+        // Проверка на существование
         throwIfExists(() -> userRepository.findByLogin(createDto.getLogin()),
                 "Login", createDto.getLogin());
-        user.setEmail(createDto.getEmail());
         throwIfExists(() -> userRepository.findByEmail(createDto.getEmail()),
                 "Email", createDto.getEmail());
+
+        User user = userMapper.toEntity(createDto);
+
         user.setPassword(passwordEncoder.encode(createDto.getPassword()));
-        user.setRole(Role.valueOf("USER"));
+        user.setRole(Role.USER);
         user.setStatus("ACTIVE");
+
         User saved = userRepository.save(user);
-        return new UserResponseDtoForAdmin(saved);
+        return userMapper.toAdminDto(saved);
     }
-
-    private User updateBaseFields(User user, String name, String login, String email, String password) {
-        if (name != null) user.setName(name);
-        if (login != null) {
-            user.setLogin(login);
-            throwIfExists(() -> userRepository.findByLogin(login),
-                    "Login", login);
-        }
-        if (email != null) {
-            user.setEmail(email);
-            throwIfExists(() -> userRepository.findByEmail(email),
-                    "Email", email);
-        }
-        if (password != null) user.setPassword(passwordEncoder.encode(password));
-        return user;
-    }
-
 
     @Transactional(rollbackFor = Exception.class)
     public UserResponseDtoForUser updateUser(String login, UserUpdateDtoForUser dto) {
         User user = findByThrowUserNotFound(
                 () -> userRepository.findByLogin(login), "login", login
         );
-        User userUpdate = updateBaseFields
-                (user, dto.getName(), dto.getLogin(), dto.getEmail(), dto.getPassword());
-        User saved = userRepository.save(userUpdate);
 
-        return new UserResponseDtoForUser(saved);
+        userMapper.updateEntity(user, dto);
+
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
+
+        if (dto.getLogin() != null) {
+            throwIfExists(() -> userRepository.findByLogin(dto.getLogin()),
+                    "Login", dto.getLogin());
+        }
+        if (dto.getEmail() != null) {
+            throwIfExists(() -> userRepository.findByEmail(dto.getEmail()),
+                    "Email", dto.getEmail());
+        }
+
+        User saved = userRepository.save(user);
+        return userMapper.toUserDto(saved);
     }
 
     public List<UserResponseDtoForUser> findByName(String name) {
         List<User> users = userRepository.findByName(name);
         checkList(users);
         return users.stream()
-                .map(UserResponseDtoForUser::new)
+                .map(userMapper::toUserDto)
                 .collect(Collectors.toList());
     }
-
 
     public UserResponseDtoForAdmin findByEmail(String email) {
         User user = findByThrowUserNotFound(
                 () -> userRepository.findByEmail(email), "email", email
         );
-        return new UserResponseDtoForAdmin(user);
+        return userMapper.toAdminDto(user);
     }
 
     public UserResponseDtoForAdmin findByLogin(String login) {
         User user = findByThrowUserNotFound(
                 () -> userRepository.findByLogin(login), "login", login
         );
-        return new UserResponseDtoForAdmin(user);
+        return userMapper.toAdminDto(user);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -123,20 +121,18 @@ public class UserService {
                 () -> userRepository.findByEmail(email),
                 "email", email
         );
-        return new UserResponseDtoForUser(user);
+        return userMapper.toUserDto(user);
     }
 
     public List<UserResponseDtoForUser> findAllUsers() {
         List<User> users = userRepository.findAllUsers();
         checkList(users);
         return users.stream()
-                .map(UserResponseDtoForUser::new)
+                .map(userMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
-
-
-
+    // Вспомогательные методы остаются без изменений
     private User findByThrowUserNotFound(Supplier<Optional<User>> supplier, String field, String value) {
         return supplier.get()
                 .orElseThrow(() -> {
@@ -145,8 +141,7 @@ public class UserService {
                 });
     }
 
-    private void throwIfExists(Supplier<Optional<User>> supplier, String word,
-                               String value) {
+    private void throwIfExists(Supplier<Optional<User>> supplier, String word, String value) {
         supplier.get().ifPresent(user -> {
             log.warn("{} already exists: {}", word, value);
             throw new ObjectAlreadyExistsException(word + " already exists: " + value);
@@ -154,7 +149,7 @@ public class UserService {
     }
 
     private void checkList(List<User> users) {
-        if (users.isEmpty()){
+        if (users.isEmpty()) {
             log.warn("Users not found");
             throw new UserNotFoundException("Users not found");
         }
