@@ -48,7 +48,6 @@ public class UserService {
 
     @Transactional(rollbackFor = Exception.class)
     public UserResponseDtoForAdmin createUser(UserCreateDtoForUser createDto) {
-        // Проверка на существование
         throwIfExists(() -> userRepository.findByLogin(createDto.getLogin()),
                 "Login", createDto.getLogin());
         throwIfExists(() -> userRepository.findByEmail(createDto.getEmail()),
@@ -69,22 +68,22 @@ public class UserService {
         User user = findByThrowUserNotFound(
                 () -> userRepository.findByLogin(login), "login", login
         );
-
-        userMapper.updateEntity(user, dto);
-
-        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        }
-
-        if (dto.getLogin() != null) {
+        if (dto.getLogin() != null && !dto.getLogin().isBlank() && !dto.getLogin().equals(user.getLogin())) {
             throwIfExists(() -> userRepository.findByLogin(dto.getLogin()),
                     "Login", dto.getLogin());
+            user.setLogin(dto.getLogin());
         }
-        if (dto.getEmail() != null) {
+        if (dto.getEmail() != null && !dto.getEmail().isBlank() && !dto.getEmail().equals(user.getEmail())) {
             throwIfExists(() -> userRepository.findByEmail(dto.getEmail()),
                     "Email", dto.getEmail());
+            user.setEmail(dto.getEmail());
         }
-
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            user.setName(dto.getName());
+        }
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
         User saved = userRepository.save(user);
         return userMapper.toUserDto(saved);
     }
@@ -132,7 +131,6 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    // Вспомогательные методы остаются без изменений
     private User findByThrowUserNotFound(Supplier<Optional<User>> supplier, String field, String value) {
         return supplier.get()
                 .orElseThrow(() -> {

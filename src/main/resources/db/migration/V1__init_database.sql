@@ -33,7 +33,7 @@ create table if not exists ads
     description text                                             not null,
     category    varchar(20)                                      not null,
     price       numeric(8, 2)                                    not null,
-    status      varchar(10)                                      not null
+    status      varchar(20)                                      not null
         constraint ad_status_check
             check ((status)::text = ANY
                    ((ARRAY ['ACTIVE'::character varying, 'BLOCKED'::character varying, 'DEACTIVATED'::character varying])::text[])),

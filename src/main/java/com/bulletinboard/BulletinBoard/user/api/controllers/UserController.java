@@ -39,7 +39,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Невалидные данные"),
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
-    @GetMapping("/user/name/{name}")
+    @GetMapping("/user/search/name/{name}")
     public List<UserResponseDtoForUser> findByName(@PathVariable String name) {
         return userService.findByName(name);
     }
@@ -53,7 +53,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/email/{email}")
+    @GetMapping("/admin/search/email/{email}")
     public UserResponseDtoForAdmin findByEmail(@Valid @PathVariable String email) {
         return userService.findByEmail(email);
     }
@@ -66,7 +66,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/login/{login}")
+    @GetMapping("/admin/search/login/{login}")
     public UserResponseDtoForAdmin findByLogin(@Valid @PathVariable String login) {
         return userService.findByLogin(login);
     }
@@ -79,7 +79,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/all")
+    @GetMapping("/admin/search/all")
     public List<UserResponseDtoForAdmin> findAll() {
         return userService.findAll();
     }
@@ -92,7 +92,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/id/{id}")
+    @GetMapping("/admin/search/id/{id}")
     public UserResponseDtoForAdmin findById(@PathVariable Long id) {
         return userService.findById(id);
     }
@@ -109,7 +109,6 @@ public class UserController {
     public UserResponseDtoForAdmin createUser(@Valid @RequestBody UserCreateDtoForUser user) {
         return userService.createUser(user);
     }
-
 
 
     @Operation(summary = "Удаление пользователя", description = "Удаляет пользователя")
@@ -149,7 +148,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Невалидные данные"),
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
-    @GetMapping("/user/findUser/{email}")
+    @GetMapping("/user/search_user/{email}")
     public UserResponseDtoForUser findForUserByEmail(@Valid @PathVariable String email) {
         return userService.findForUserByEmail(email);
     }
@@ -161,11 +160,8 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Невалидные данные"),
             @ApiResponse(responseCode = "403", description = "Нет прав доступа")
     })
-    @GetMapping("/user/all")
+    @GetMapping("/user/search/all")
     public List<UserResponseDtoForUser> findAllUsers() {
         return userService.findAllUsers();
     }
-
-
-
 }

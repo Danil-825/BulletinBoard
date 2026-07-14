@@ -21,6 +21,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(AdNotFoundException.class)
+    public ResponseEntity<Object> handleAdNotFoundException(AdNotFoundException e) {
+        notFound(e, "Ad");
+        ErrorResponse errorResponse = new ErrorResponse("Ad not found", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
     @ExceptionHandler(ObjectAlreadyExistsException.class)
     public ResponseEntity<Object> handleObjectAlreadyExistsException(ObjectAlreadyExistsException e) {
         log.warn("Object already exists: {}", e.getMessage());

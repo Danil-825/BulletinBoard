@@ -14,7 +14,6 @@ import java.util.Optional;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    // Маппинг с Optional
     default UserResponseDtoForAdmin toAdminDto(Optional<User> user) {
         return user.map(this::toAdminDtoInternal).orElse(null);
     }
@@ -27,7 +26,6 @@ public interface UserMapper {
 
     UserResponseDtoForUser toUserDto(User user);
 
-    // Основные методы маппинга
     UserResponseDtoForAdmin toAdminDtoInternal(User user);
 
     UserResponseDtoForUser toUserDtoInternal(User user);
