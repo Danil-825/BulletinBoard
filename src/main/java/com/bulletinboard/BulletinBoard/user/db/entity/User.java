@@ -2,6 +2,7 @@ package com.bulletinboard.BulletinBoard.user.db.entity;
 
 import com.bulletinboard.BulletinBoard.build.db.entity.Ad;
 import com.bulletinboard.BulletinBoard.user.db.enums.Role;
+import com.bulletinboard.BulletinBoard.user.db.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,7 +29,8 @@ public class User {
 
     private String password;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     @Enumerated(EnumType.STRING)
     private Role role;

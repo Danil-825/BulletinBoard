@@ -23,18 +23,15 @@ spring:
     locations: classpath:db/migration
     schemas: public
 
-# Swagger
 springdoc:
   swagger-ui:
     operations-sorter: method
     tags-sorter: alpha
 
-# JWT
 jwt:
   expiration: 3600000
   secret: nStPlulbKgo1O5GHtsDxjWU1GTRnE3GcrAs3voaKDeG
 
-# Логи
 logging:
   level:
     root: INFO

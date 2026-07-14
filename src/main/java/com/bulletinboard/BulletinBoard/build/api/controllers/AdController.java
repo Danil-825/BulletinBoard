@@ -26,7 +26,7 @@ public class AdController {
 
 
 
-    @Operation(summary="Найти объявление по id")
+    @Operation(summary="Найти объявление по id для адимна")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "объявление найдено"),
             @ApiResponse(responseCode = "400", description = "Невалидные данные")
@@ -34,6 +34,16 @@ public class AdController {
     @GetMapping("/admin/search_ad/id/{id}")
     public AdResponseForAdminDto findById(@PathVariable Long id) {
         return adService.findById(id);
+    }
+
+    @Operation(summary="Найти объявление по id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "объявление найдено"),
+            @ApiResponse(responseCode = "400", description = "Невалидные данные")
+    })
+    @GetMapping("/user/search_ad/id/{id}")
+    public AdResponseForUserDto findByIdForUser(@PathVariable Long id) {
+        return adService.findByIdForUser(id);
     }
 
     @Operation(summary="обновить объявление")
@@ -67,6 +77,8 @@ public class AdController {
         return adService.findAllForUser();
     }
 
+
+
     @Operation(summary="Вывести объявления юзера")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "объявления найдены"),
@@ -99,6 +111,16 @@ public class AdController {
     }
 
 
+    @Operation(summary="Найти объявление по name для админа")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "объявление найдено"),
+            @ApiResponse(responseCode = "400", description = "Невалидные данные")
+    })
+    @GetMapping("/admin/search/user_name/{name}")
+    public List<AdResponseForAdminDto> findByNameForAdmin(@PathVariable String name) {
+        return adService.findByNameForAdmin(name);
+    }
+
     @Operation(summary="Найти объявление по userId")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "объявление найдено"),
@@ -107,6 +129,16 @@ public class AdController {
     @GetMapping("/search/user_id/{userId}")
     public List<AdResponseForUserDto> findByUserId(@PathVariable Long userId) {
         return adService.findByUserId(userId);
+    }
+
+    @Operation(summary="Найти объявление по userId для админа")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "объявление найдено"),
+            @ApiResponse(responseCode = "400", description = "Невалидные данные")
+    })
+    @GetMapping("/admin/search/user_id/{userId}")
+    public List<AdResponseForAdminDto> findByUserIdForAdmin(@PathVariable Long userId) {
+        return adService.findByUserIdForAdmin(userId);
     }
 
 
@@ -161,7 +193,7 @@ public class AdController {
             @ApiResponse(responseCode = "400", description = "Невалидные данные")
     })
     @GetMapping("/user/my_ads/{name}")
-    public AdResponseForAdminDto findByNameAndUserLogin (@PathVariable String name,
+    public List<AdResponseForUserDto> findByNameAndUserLogin (@PathVariable String name,
                                                          @AuthenticationPrincipal UserDetails currentUser) {
         return adService.findByNameAndUserLogin(name, currentUser.getUsername());
     }

@@ -5,6 +5,8 @@ import com.bulletinboard.BulletinBoard.user.api.dto.admin.UserResponseDtoForAdmi
 import com.bulletinboard.BulletinBoard.user.api.dto.users.UserResponseDtoForUser;
 import com.bulletinboard.BulletinBoard.user.api.dto.users.UserUpdateDtoForUser;
 import com.bulletinboard.BulletinBoard.user.impl.services.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,14 +24,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 @Tag(name = "Пользователи", description = "Операции с пользователями")
 public class UserController {
 
     private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
 
     @Operation(summary = "Найти пользователей по name")
@@ -163,5 +162,28 @@ public class UserController {
     @GetMapping("/user/search/all")
     public List<UserResponseDtoForUser> findAllUsers() {
         return userService.findAllUsers();
+    }
+
+    @PatchMapping("admin/block_user/{id}")
+    @Operation(summary = "Заблокировать юзера")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "юзер заблокирован"),
+            @ApiResponse(responseCode = "404", description = "юзер не найден"),
+            @ApiResponse(responseCode = "409", description = "юзер уже заблокирован")
+    })
+    public ResponseEntity<UserResponseDtoForAdmin> blockAd(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.blockUser(id));
+    }
+
+    @PatchMapping("admin/unblock_user/{id}")
+
+    @Operation(summary = "Разблокировать юзера")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "юзер разблокирован"),
+            @ApiResponse(responseCode = "404", description = "юзер не найден"),
+            @ApiResponse(responseCode = "409", description = "юзер уже разблокирован")
+    })
+    public ResponseEntity<UserResponseDtoForAdmin> unblockAd(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.unblockUser(id));
     }
 }

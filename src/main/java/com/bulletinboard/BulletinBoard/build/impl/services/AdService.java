@@ -12,6 +12,7 @@ import com.bulletinboard.BulletinBoard.common.exceptions.AdNotFoundException;
 import com.bulletinboard.BulletinBoard.common.exceptions.UserNotFoundException;
 import com.bulletinboard.BulletinBoard.user.db.entity.User;
 import com.bulletinboard.BulletinBoard.user.db.enums.Role;
+import com.bulletinboard.BulletinBoard.user.db.enums.UserStatus;
 import com.bulletinboard.BulletinBoard.user.db.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AdService {
 
     private final AdRepository adRepository;
@@ -40,17 +42,21 @@ public class AdService {
                 () -> userRepository.findByLogin(loginUser), loginUser
         );
 
-        if (userSender.getRole().equals(Role.USER) && userSender.getStatus().equals("ACTIVE")) {
+        if (userSender.getRole().equals(Role.USER) && userSender.getStatus() == UserStatus.ACTIVE) {
+            if (adCreateDTO.getPrice() < 0) {
+                throw new IllegalArgumentException("Price cannot be less than zero");
+            }
             Ad ad = adMapper.toEntity(adCreateDTO);
             ad.setStatus(AdStatus.ACTIVE);
             ad.setUser(userSender);
             ad.setCreatedAt(LocalDateTime.now());
-
+            ad.setPrice(adCreateDTO.getPrice());
+            ad.setCategory(adCreateDTO.getCategory());
             Ad savedAd = adRepository.save(ad);
             log.info("Ad created by user {}", loginUser);
             return adMapper.toResponseDtoForUser(savedAd);
         } else {
-            throw new IllegalStateException("User is not active or not a regular user");
+            throw new IllegalStateException("User is not active or not user");
         }
     }
 
@@ -64,36 +70,40 @@ public class AdService {
                 () -> adRepository.findById(adId), adId.toString()
         );
 
-        if (!ad.getUser().getId().equals(user.getId())) {
-            log.warn("User {} tried to update ad {} that doesn't belong to them", login, adId);
-            throw new AccessDeniedException("You can only update your own ads");
+        if (user.getRole().equals(Role.USER) && user.getStatus() == UserStatus.ACTIVE) {
+            if (!ad.getUser().getId().equals(user.getId())) {
+                log.warn("User {} tried to update ad {} that doesn't belong to them", login, adId);
+                throw new AccessDeniedException("You can only update your own ads");
+            }
+
+            if (ad.getStatus() == AdStatus.BLOCKED || ad.getStatus() == AdStatus.DEACTIVATED) {
+                log.warn("Cannot update ad with status: {}", ad.getStatus());
+                throw new IllegalStateException("Cannot update ad with status: " + ad.getStatus());
+            }
+
+            if (dto.getName() != null && !dto.getName().isEmpty()) {
+                ad.setName(dto.getName());
+            }
+
+            if (dto.getDescription() != null && !dto.getDescription().isEmpty()) {
+                ad.setDescription(dto.getDescription());
+            }
+
+            if (dto.getCategory() != null && !dto.getCategory().isEmpty()) {
+                ad.setCategory(dto.getCategory());
+            }
+
+            if (dto.getPrice() >= 0) {
+                ad.setPrice(dto.getPrice());
+            }
+
+            Ad updatedAd = adRepository.save(ad);
+
+            log.info("Ad {} updated by user {}", adId, login);
+            return adMapper.toResponseDtoForUser(updatedAd);
+        } else {
+            throw new IllegalStateException("User is not active or not user");
         }
-
-        if (ad.getStatus() == AdStatus.BLOCKED || ad.getStatus() == AdStatus.DEACTIVATED) {
-            log.warn("Cannot update ad with status: {}", ad.getStatus());
-            throw new IllegalStateException("Cannot update ad with status: " + ad.getStatus());
-        }
-
-        if (dto.getName() != null && !dto.getName().isEmpty()) {
-            ad.setName(dto.getName());
-        }
-
-        if (dto.getDescription() != null && !dto.getDescription().isEmpty()) {
-            ad.setDescription(dto.getDescription());
-        }
-
-        if (dto.getCategory() != null && !dto.getCategory().isEmpty()) {
-            ad.setCategory(dto.getCategory());
-        }
-
-        if (dto.getPrice() > 0) {
-            ad.setPrice(dto.getPrice());
-        }
-
-        Ad updatedAd = adRepository.save(ad);
-
-        log.info("Ad {} updated by user {}", adId, login);
-        return adMapper.toResponseDtoForUser(updatedAd);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -255,10 +265,16 @@ public class AdService {
                 .collect(Collectors.toList());
     }
 
-    public AdResponseForAdminDto findById(Long notificationId) {
-        Ad ad = adRepository.findById(notificationId)
+    public AdResponseForAdminDto findById(Long adId) {
+        Ad ad = adRepository.findById(adId)
                 .orElseThrow(() -> new AdNotFoundException("Ad not found"));
         return adMapper.toResponseDtoForAdmin(ad);
+    }
+
+    public AdResponseForUserDto findByIdForUser(Long adId) {
+        Ad ad = adRepository.findById(adId)
+                .orElseThrow(() -> new AdNotFoundException("Ad not found"));
+        return adMapper.toResponseDtoForUser(ad);
     }
 
     public List<AdResponseForUserDto> findByName(String name) {
@@ -282,10 +298,12 @@ public class AdService {
                 .collect(Collectors.toList());
     }
 
-    public AdResponseForAdminDto findByNameAndUserLogin(String name, String userLogin) {
-        Ad ad = adRepository.findByNameAndUserLogin(name, userLogin)
-                .orElseThrow(() -> new AdNotFoundException("Ad not found"));
-        return adMapper.toResponseDtoForAdmin(ad);
+    public List<AdResponseForUserDto> findByNameAndUserLogin(String name, String userLogin) {
+        List<Ad> ads = adRepository.findByNameAndUserLogin(name, userLogin);
+        checkList(ads);
+        return ads.stream()
+                .map(adMapper::toResponseDtoForUser)
+                .collect(Collectors.toList());
     }
 
     private void checkList(List<Ad> ads) {

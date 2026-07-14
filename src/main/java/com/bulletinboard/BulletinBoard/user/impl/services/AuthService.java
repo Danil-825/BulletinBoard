@@ -5,6 +5,7 @@ import com.bulletinboard.BulletinBoard.user.api.dto.JwtResponse;
 import com.bulletinboard.BulletinBoard.user.api.dto.LoginRequest;
 import com.bulletinboard.BulletinBoard.user.api.dto.users.RegisterRequest;
 import com.bulletinboard.BulletinBoard.user.db.entity.User;
+import com.bulletinboard.BulletinBoard.user.db.enums.UserStatus;
 import com.bulletinboard.BulletinBoard.user.db.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setRole(USER);
-        user.setStatus("ACTIVE");
+        user.setStatus(UserStatus.ACTIVE);
 
         userRepository.save(user);
 

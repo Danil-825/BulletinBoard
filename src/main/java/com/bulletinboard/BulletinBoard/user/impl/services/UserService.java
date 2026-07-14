@@ -8,6 +8,7 @@ import com.bulletinboard.BulletinBoard.user.api.dto.users.UserResponseDtoForUser
 import com.bulletinboard.BulletinBoard.user.api.dto.users.UserUpdateDtoForUser;
 import com.bulletinboard.BulletinBoard.user.db.entity.User;
 import com.bulletinboard.BulletinBoard.user.db.enums.Role;
+import com.bulletinboard.BulletinBoard.user.db.enums.UserStatus;
 import com.bulletinboard.BulletinBoard.user.db.repository.UserRepository;
 import com.bulletinboard.BulletinBoard.user.impl.mappers.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -57,7 +57,7 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(createDto.getPassword()));
         user.setRole(Role.USER);
-        user.setStatus("ACTIVE");
+        user.setStatus(UserStatus.ACTIVE);
 
         User saved = userRepository.save(user);
         return userMapper.toAdminDto(saved);
@@ -131,6 +131,44 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDtoForAdmin blockUser(Long id) {
+        User user = findByThrowUserNotFound(
+                () -> userRepository.findById(id),
+                "id", id.toString()
+        );
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            log.warn("User {} is already blocked", id);
+            throw new IllegalStateException("User is already blocked");
+        }
+
+        user.setStatus(UserStatus.BLOCKED);
+        User blockedAd = userRepository.save(user);
+
+        log.info("User {} blocked by admin", id);
+        return userMapper.toAdminDto(blockedAd);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDtoForAdmin unblockUser(Long id) {
+        User user = findByThrowUserNotFound(
+                () -> userRepository.findById(id),
+                "id", id.toString()
+        );
+
+        if (user.getStatus() != UserStatus.BLOCKED) {
+            log.warn("User {} is not blocked", id);
+            throw new IllegalStateException("User is not blocked");
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        User unblockedAd = userRepository.save(user);
+
+        log.info("Ad {} unblocked by admin", id);
+        return userMapper.toAdminDto(unblockedAd);
+    }
+
     private User findByThrowUserNotFound(Supplier<Optional<User>> supplier, String field, String value) {
         return supplier.get()
                 .orElseThrow(() -> {
@@ -152,4 +190,5 @@ public class UserService {
             throw new UserNotFoundException("Users not found");
         }
     }
+
 }

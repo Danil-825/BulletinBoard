@@ -15,10 +15,10 @@ create table if not exists users
     role     varchar
         constraint users_role_check
             check ((role)::text = ANY ((ARRAY ['USER'::character varying, 'ADMIN'::character varying])::text[])),
-    status   varchar(10)
+    status   varchar(20)
         constraint users_status_check
             check ((status)::text = ANY
-                   ((ARRAY ['ACTIVE'::character varying, 'DEACTIVATED'::character varying])::text[]))
+                   ((ARRAY ['ACTIVE'::character varying, 'BLOCKED'::character varying])::text[]))
 );
 
 alter table users
