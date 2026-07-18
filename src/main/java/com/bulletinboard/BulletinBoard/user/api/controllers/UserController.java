@@ -164,7 +164,7 @@ public class UserController {
         return userService.findAllUsers();
     }
 
-    @PatchMapping("admin/block_user/{id}")
+    @PatchMapping("/admin/block_user/{id}")
     @Operation(summary = "Заблокировать юзера")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "юзер заблокирован"),
@@ -175,7 +175,7 @@ public class UserController {
         return ResponseEntity.ok(userService.blockUser(id));
     }
 
-    @PatchMapping("admin/unblock_user/{id}")
+    @PatchMapping("/admin/unblock_user/{id}")
 
     @Operation(summary = "Разблокировать юзера")
     @ApiResponses({

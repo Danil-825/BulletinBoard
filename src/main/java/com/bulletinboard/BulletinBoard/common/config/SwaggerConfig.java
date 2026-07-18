@@ -16,7 +16,7 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("API")
                         .version("1.0.0")
-                        .description("API User Autorization"))
+                        .description("API User Authorization"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth",

@@ -4,7 +4,6 @@ package com.bulletinboard.BulletinBoard.build.impl.mappers;
 import com.bulletinboard.BulletinBoard.build.api.dto.admin.AdResponseForAdminDto;
 import com.bulletinboard.BulletinBoard.build.api.dto.users.AdCreateDTO;
 import com.bulletinboard.BulletinBoard.build.api.dto.users.AdResponseForUserDto;
-import com.bulletinboard.BulletinBoard.build.api.dto.users.AdUpdateDtoForUser;
 import com.bulletinboard.BulletinBoard.build.db.entity.Ad;
 import org.mapstruct.*;
 
@@ -28,9 +27,4 @@ public interface AdMapper {
     @Mapping(target = "user", ignore = true)
     Ad toEntity(AdCreateDTO adCreateDTO);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "status", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "user", ignore = true)
-    void updateEntity(@MappingTarget Ad ad, AdUpdateDtoForUser dto);
 }

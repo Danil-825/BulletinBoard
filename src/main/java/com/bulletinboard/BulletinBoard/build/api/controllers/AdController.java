@@ -226,7 +226,7 @@ public class AdController {
         ));
     }
 
-    @PatchMapping("admin/block/{adId}")
+    @PatchMapping("/admin/block/{adId}")
     @Operation(summary = "Заблокировать объявление")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Объявление заблокировано"),
@@ -237,7 +237,7 @@ public class AdController {
         return ResponseEntity.ok(adService.blockAd(adId));
     }
 
-    @PatchMapping("admin/unblock/{adId}")
+    @PatchMapping("/admin/unblock/{adId}")
     @Operation(summary = "Разблокировать объявление")
     public ResponseEntity<AdResponseForAdminDto> unblockAd(@PathVariable Long adId) {
         return ResponseEntity.ok(adService.unblockAd(adId));
