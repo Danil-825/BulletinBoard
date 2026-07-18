@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bulletin_board
+    username: postgres
+    password: 54321
+    hikari:
+      connection-timeout: 30000
